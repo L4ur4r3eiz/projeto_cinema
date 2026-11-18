@@ -1,0 +1,11 @@
+{
+  "title": "projeto cinema",
+  "description": "Plataforma audiovisual escolar para explorar curtas, conhecer a equipe e se inscrever no projeto, com acesso personalizado e ferramentas de gestão para os organizadores.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
