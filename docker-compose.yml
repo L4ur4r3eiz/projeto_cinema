@@ -1,0 +1,16 @@
+# PostgreSQL local para desenvolvimento. Uso: docker compose up -d
+# Usuário, senha e banco vêm do .env na raiz (copie de .env.example) e precisam bater com backend/.env.
+services:
+  postgres:
+    image: postgres:17.6
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - dados-postgres:/var/lib/postgresql/data
+
+volumes:
+  dados-postgres:
