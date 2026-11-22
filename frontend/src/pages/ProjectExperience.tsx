@@ -1,5 +1,7 @@
-import { m, useScroll, useTransform } from 'motion/react'
-import { useEffect, useRef, useState, useTransition, type FormEvent } from 'react'
+import { m, useReducedMotion, useScroll, useTransform } from 'motion/react'
+import { lazy, Suspense, useEffect, useRef, useState, useTransition, type FormEvent } from 'react'
+import { temWebGL } from '../abertura/modo'
+import { useCenaVisivel } from '../three/useCenaVisivel'
 import { useNavigate } from 'react-router'
 import { BarraRolagem, CartaoInclinavel } from '../components/animados'
 import { CURVA, escalonar } from '../motion/tokens'
@@ -44,6 +46,9 @@ const aboutCards = [
   },
 ]
 
+// three.js só baixa se o hero 3D for mostrado
+const RoloDeFilme = lazy(() => import('../three/RoloDeFilme'))
+
 function mediaValue(value: PublicMedia | string | number | null | undefined) {
   return typeof value === 'object' && value?.url ? value : null
 }
@@ -76,6 +81,9 @@ export function ProjectExperience({
   const yTitulo = useTransform(progressoHero, [0, 1], [0, 220])
   const escalaTitulo = useTransform(progressoHero, [0, 1], [1, 0.88])
   const opacidadeHero = useTransform(progressoHero, [0, 0.75], [1, 0])
+  const reduzirMovimento = useReducedMotion()
+  const [mostrar3D] = useState(() => temWebGL())
+  const heroVisivel = useCenaVisivel(heroRef)
 
   useEffect(() => {
     const shouldOpen = window.localStorage.getItem('etec:onboarding') === 'pending'
@@ -201,6 +209,13 @@ export function ProjectExperience({
 
       <div>
         <section ref={heroRef} id="inicio" className="poster-hero relative min-h-screen overflow-hidden">
+          {mostrar3D && !reduzirMovimento && (
+            <m.div style={{ opacity: opacidadeHero }} className="pointer-events-none absolute inset-0 opacity-90">
+              <Suspense fallback={null}>
+                <RoloDeFilme progresso={progressoHero} ativo={heroVisivel} />
+              </Suspense>
+            </m.div>
+          )}
           <div className="absolute inset-x-6 top-24 flex items-center gap-4 sm:inset-x-10 lg:inset-x-14">
             <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4 fill-[#FFC700]">
               <path d="M12 1.5c.5 6.7 3.8 10 10.5 10.5-6.7.5-10 3.8-10.5 10.5C11.5 15.8 8.2 12.5 1.5 12 8.2 11.5 11.5 8.2 12 1.5Z" />
@@ -212,7 +227,7 @@ export function ProjectExperience({
           </div>
 
           <m.div
-            style={{ opacity: opacidadeHero }}
+            style={{ opacity: opacidadeHero, y: yTitulo, scale: escalaTitulo }}
             className="relative z-10 flex min-h-screen flex-col items-center justify-center px-5 pt-16 text-center"
           >
             <m.p
@@ -224,7 +239,6 @@ export function ProjectExperience({
               Projeto estudantil de audiovisual
             </m.p>
             <m.h1
-              style={{ y: yTitulo, scale: escalaTitulo }}
               className="text-[18vw] font-semibold leading-[.72] tracking-[-0.095em] text-white sm:text-[14vw] lg:text-[12.5vw]"
             >
               {/* cada linha sobe por trás de uma máscara, como letreiro de abertura */}
