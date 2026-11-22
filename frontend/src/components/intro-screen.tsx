@@ -1,6 +1,7 @@
 import { useReducedMotion } from 'motion/react'
 import { useCallback, useEffect, useRef, useState, type ComponentType } from 'react'
 import { useNavigate } from 'react-router'
+import { DURACAO_ABERTURA } from '../abertura/linhaDoTempo'
 import { escolherModoAbertura, temWebGL, type ModoAbertura } from '../abertura/modo'
 import { Brand } from './brand'
 
@@ -45,8 +46,9 @@ export function IntroScreen({ destination = '/projeto' }: { destination?: string
   }, [reduzirMovimento])
 
   useEffect(() => {
-    if (modo === '3d') return
-    const timer = window.setTimeout(sair, modo === 'estatico' ? DURACAO_ESTATICA_MS : DURACAO_CSS_MS)
+    // no 3D quem avisa o fim é a cena; o timer só garante a saída se o requestAnimationFrame travar (aba em 2º plano)
+    const espera = modo === '3d' ? DURACAO_ABERTURA * 1000 + 1500 : modo === 'estatico' ? DURACAO_ESTATICA_MS : DURACAO_CSS_MS
+    const timer = window.setTimeout(sair, espera)
     return () => window.clearTimeout(timer)
   }, [modo, sair])
 
