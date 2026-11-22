@@ -21,3 +21,6 @@ backend/uploads/
 # registros gerados por hooks locais do Claude Code
 receipts/
 review-receipts/
+
+# área de trabalho dos planos (superpowers)
+.superpowers/
