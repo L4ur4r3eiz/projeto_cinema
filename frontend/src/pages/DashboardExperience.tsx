@@ -1,3 +1,4 @@
+import { AnimatePresence, m } from 'motion/react'
 import { useEffect, useMemo, useState, useTransition, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 import {
@@ -14,6 +15,7 @@ import {
   type PublicTeamMember,
 } from '../api'
 import { Brand } from '../components/brand'
+import { CURVA, DURACAO } from '../motion/tokens'
 
 type UserRow = {
   id: string
@@ -388,7 +390,13 @@ export function DashboardExperience({
 
         <div className="mx-auto max-w-[1500px] p-5 sm:p-8 lg:p-10">
           {message && (
-            <div className="mb-6 flex items-center justify-between rounded-xl border border-[#FFC700]/20 bg-[#FFC700]/5 px-4 py-3 text-xs text-[#D0D0D0]">
+            <m.div
+              key={message}
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: DURACAO.rapida, ease: CURVA.cinema }}
+              className="mb-6 flex items-center justify-between rounded-xl border border-[#FFC700]/20 bg-[#FFC700]/5 px-4 py-3 text-xs text-[#D0D0D0]"
+            >
               <span>{message}</span>
               <button
                 type="button"
@@ -397,7 +405,7 @@ export function DashboardExperience({
               >
                 Fechar
               </button>
-            </div>
+            </m.div>
           )}
 
           {activeTab === 'overview' && (
@@ -1004,17 +1012,28 @@ export function DashboardExperience({
         </div>
       </div>
 
+      <AnimatePresence>
       {selectedApplication && (
-        <div
+        <m.div
           role="dialog"
           aria-modal="true"
           aria-labelledby="application-detail-title"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: DURACAO.rapida }}
           className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/80 p-4 backdrop-blur-xl sm:p-8"
           onMouseDown={(event) => {
             if (event.currentTarget === event.target) setSelectedApplication(null)
           }}
         >
-          <section className="relative my-auto w-full max-w-3xl overflow-hidden rounded-[28px] border border-[#222222] bg-[#121212] shadow-[0_40px_140px_rgba(0,0,0,.85)]">
+          <m.section
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: 8 }}
+            transition={{ duration: DURACAO.rapida, ease: CURVA.cinema }}
+            className="relative my-auto w-full max-w-3xl overflow-hidden rounded-[28px] border border-[#222222] bg-[#121212] shadow-[0_40px_140px_rgba(0,0,0,.85)]"
+          >
             <div className="absolute -right-24 -top-24 size-64 rounded-full bg-[#FFC700]/8 blur-3xl" />
             <header className="relative flex items-start justify-between gap-6 border-b border-[#222222] px-6 py-6 sm:px-8">
               <div>
@@ -1164,9 +1183,10 @@ export function DashboardExperience({
                 Fechar detalhes
               </button>
             </footer>
-          </section>
-        </div>
+          </m.section>
+        </m.div>
       )}
+      </AnimatePresence>
     </main>
   )
 }

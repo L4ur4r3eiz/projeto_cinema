@@ -1,7 +1,9 @@
+import { AnimatePresence, m } from 'motion/react'
 import { useState, useTransition } from 'react'
 import { useNavigate } from 'react-router'
 import { loginAction, signUpAction } from '../api'
 import { Brand } from '../components/brand'
+import { CURVA, DURACAO } from '../motion/tokens'
 
 type FieldErrors = Partial<Record<'email' | 'password' | 'confirmPassword' | 'form', string>>
 
@@ -72,16 +74,31 @@ export function AuthScreen() {
     <main className="min-h-screen bg-[#030303] px-3 py-3 text-white md:px-5 md:py-5">
       <div className="mx-auto grid min-h-[calc(100vh-24px)] max-w-[1440px] overflow-hidden rounded-[28px] border border-white/8 bg-[#050505] md:min-h-[calc(100vh-40px)] md:grid-cols-[1.05fr_.95fr]">
         <section className="auth-visual relative hidden overflow-hidden p-12 md:flex md:flex-col lg:p-16">
+          <div aria-hidden="true" className="grao-filme pointer-events-none absolute inset-0" />
           <div className="relative z-10">
             <Brand />
           </div>
           <div className="relative z-10 grid flex-1 place-items-center">
             <div className="text-center">
-              <span className="mx-auto mb-7 block h-px w-16 bg-gradient-to-r from-transparent via-[#FFC700] to-transparent" />
+              <m.span
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ duration: DURACAO.lenta, ease: CURVA.cinema }}
+                className="mx-auto mb-7 block h-px w-16 bg-gradient-to-r from-transparent via-[#FFC700] to-transparent"
+              />
               <h1 className="text-3xl font-medium tracking-[-0.055em] lg:text-5xl">
-                Onde histórias
-                <br />
-                ganham vida
+                {['Onde histórias', 'ganham vida'].map((linha, i) => (
+                  <span key={linha} className="block overflow-hidden pb-[0.08em]">
+                    <m.span
+                      initial={{ y: '105%' }}
+                      animate={{ y: '0%' }}
+                      transition={{ duration: DURACAO.lenta, delay: 0.2 + i * 0.12, ease: CURVA.cinema }}
+                      className="block"
+                    >
+                      {linha}
+                    </m.span>
+                  </span>
+                ))}
               </h1>
             </div>
           </div>
@@ -92,34 +109,53 @@ export function AuthScreen() {
             <Brand />
           </div>
           <div className="w-full max-w-md">
-            <div className="mb-10 flex rounded-full border border-white/10 bg-[#0A0A0A] p-1">
+            <div className="relative mb-10 flex rounded-full border border-white/10 bg-[#0A0A0A] p-1">
+              {/* pílula branca que desliza para a aba ativa */}
+              <m.span
+                aria-hidden="true"
+                initial={false}
+                animate={{ x: mode === 'login' ? '100%' : '0%' }}
+                transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                className="absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-white"
+              />
               {(['signup', 'login'] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
+                  aria-pressed={mode === tab}
                   onClick={() => {
                     setMode(tab)
                     setFieldErrors({})
                   }}
-                  className={`flex-1 rounded-full px-4 py-2.5 text-xs font-semibold transition ${
-                    mode === tab ? 'bg-white text-black' : 'text-[#8B8B8B] hover:text-white'
+                  className={`relative z-10 flex-1 rounded-full px-4 py-2.5 text-xs font-semibold transition-colors ${
+                    mode === tab ? 'text-black' : 'text-[#8B8B8B] hover:text-white'
                   }`}
                 >
                   {tab === 'signup' ? 'Criar conta' : 'Entrar'}
                 </button>
               ))}
             </div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-[#FFC700]">
-              {mode === 'signup' ? 'Primeiro acesso' : 'Bem-vindo de volta'}
-            </p>
-            <h2 className="mt-4 text-3xl font-medium tracking-[-0.045em] sm:text-4xl">
-              {mode === 'signup' ? 'Crie sua conta' : 'Entre na sua conta'}
-            </h2>
-            <p className="mt-3 text-sm leading-6 text-[#8F8F8F]">
-              {mode === 'signup'
-                ? 'Apenas o essencial. Você estará em cena em poucos segundos.'
-                : 'Continue de onde parou e explore nossas produções.'}
-            </p>
+            <AnimatePresence mode="wait" initial={false}>
+              <m.div
+                key={mode}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: DURACAO.rapida, ease: CURVA.cinema }}
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-[#FFC700]">
+                  {mode === 'signup' ? 'Primeiro acesso' : 'Bem-vindo de volta'}
+                </p>
+                <h2 className="mt-4 text-3xl font-medium tracking-[-0.045em] sm:text-4xl">
+                  {mode === 'signup' ? 'Crie sua conta' : 'Entre na sua conta'}
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-[#8F8F8F]">
+                  {mode === 'signup'
+                    ? 'Apenas o essencial. Você estará em cena em poucos segundos.'
+                    : 'Continue de onde parou e explore nossas produções.'}
+                </p>
+              </m.div>
+            </AnimatePresence>
 
             <form action={submit} noValidate className="mt-9 grid gap-5">
               <label className="grid gap-2 text-xs font-medium text-[#D0D0D0]">
