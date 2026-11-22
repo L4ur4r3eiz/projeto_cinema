@@ -1,11 +1,11 @@
 import { useReducedMotion } from 'motion/react'
-import { useEffect, useMemo, useState, type ComponentType } from 'react'
+import { useEffect, useMemo, useRef, useState, type ComponentType, type RefObject } from 'react'
 import { useNavigate } from 'react-router'
 import { DURACAO_ABERTURA } from '../abertura/linhaDoTempo'
 import { criarSaidaUnica, escolherModoAbertura, temWebGL, type ModoAbertura } from '../abertura/modo'
 import { Brand } from './brand'
 
-type Cena = ComponentType<{ aoTerminar: () => void }>
+type Cena = ComponentType<{ aoTerminar: () => void; gatilho: RefObject<(() => void) | null> }>
 
 // Tempo de tela por modo quando não há 3D (o 3D avisa sozinho quando termina).
 const DURACAO_CSS_MS = 3600
@@ -17,8 +17,19 @@ export function IntroScreen({ destination = '/projeto' }: { destination?: string
   const [modo, setModo] = useState<ModoAbertura>(reduzirMovimento ? 'estatico' : 'css')
   const [Cena3D, setCena3D] = useState<Cena | null>(null)
   const [clapping, setClapping] = useState(false)
+  const timerBatida = useRef<number | undefined>(undefined)
+  const gatilho3D = useRef<(() => void) | null>(null)
+  const saiu = useRef(false)
   // Pular, fim do 3D e fim do tempo passam todos por aqui: navega uma vez só.
-  const sair = useMemo(() => criarSaidaUnica(() => navigate(destination, { replace: true })), [destination, navigate])
+  const sair = useMemo(
+    () =>
+      criarSaidaUnica(() => {
+        saiu.current = true
+        navigate(destination, { replace: true })
+      }),
+    [destination, navigate],
+  )
+  useEffect(() => () => window.clearTimeout(timerBatida.current), [])
 
   useEffect(() => {
     if (reduzirMovimento || !temWebGL()) return
@@ -26,7 +37,7 @@ export function IntroScreen({ destination = '/projeto' }: { destination?: string
     let ativo = true
     import('../abertura/ClaqueteCena')
       .then((m) => {
-        if (!ativo) return
+        if (!ativo || saiu.current) return // já saindo: não monta o 3D à toa
         const escolhido = escolherModoAbertura({ webgl: true, reduzirMovimento, carregouEm: performance.now() - inicio })
         if (escolhido === '3d') {
           setCena3D(() => m.default)
@@ -46,16 +57,26 @@ export function IntroScreen({ destination = '/projeto' }: { destination?: string
     return () => window.clearTimeout(timer)
   }, [modo, sair])
 
+  // cada clique reinicia a batida: limpa o timer anterior e religa a classe no quadro seguinte
   const clap = () => {
-    setClapping(true)
-    window.setTimeout(() => setClapping(false), 560)
+    window.clearTimeout(timerBatida.current)
+    setClapping(false)
+    requestAnimationFrame(() => setClapping(true))
+    timerBatida.current = window.setTimeout(() => setClapping(false), 560)
   }
 
   return (
     <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[#030303] text-white">
       {modo === '3d' && Cena3D ? (
         <>
-          <Cena3D aoTerminar={sair} />
+          <Cena3D aoTerminar={sair} gatilho={gatilho3D} />
+          {/* a claquete 3D é desenho: este botão invisível sobre ela dá mouse, toque e teclado à batida */}
+          <button
+            type="button"
+            aria-label="Bater claquete"
+            onClick={() => gatilho3D.current?.()}
+            className="absolute left-1/2 top-1/2 z-10 h-[46vh] w-[min(62vw,560px)] -translate-x-1/2 -translate-y-1/2 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-[#FFC700]/70"
+          />
           <p className="pointer-events-none absolute inset-x-0 bottom-10 z-10 text-center text-[10px] uppercase tracking-[0.46em] text-[#A1A1A1]">
             Uma produção estudantil · 2026
           </p>

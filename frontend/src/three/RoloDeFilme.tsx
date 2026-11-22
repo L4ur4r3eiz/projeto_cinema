@@ -2,6 +2,7 @@ import { Environment, Lightformer } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
 import type { MotionValue } from 'motion/react'
 import { useMemo, useRef } from 'react'
+import { limitarDelta } from './useCenaVisivel'
 import {
   BufferGeometry,
   CanvasTexture,
@@ -108,7 +109,8 @@ function Cena({ progresso }: { progresso: MotionValue<number> }) {
     return { pelicula: texturaPelicula() as Texture, disco: texturaDisco(), fita: geometriaFita(curva, 0.7, 160) }
   }, [])
 
-  useFrame((_, delta) => {
+  useFrame((_, bruto) => {
+    const delta = limitarDelta(bruto)
     const p = progresso.get()
     if (rolo.current) rolo.current.rotation.z -= delta * (0.25 + p * 3)
     pelicula.offset.x -= delta * (0.04 + p * 0.6)

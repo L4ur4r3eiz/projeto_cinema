@@ -2,14 +2,16 @@ import { Environment, Lightformer } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { EffectComposer, Noise, Vignette } from '@react-three/postprocessing'
 import { BlendFunction } from 'postprocessing'
-import { useRef } from 'react'
+import { useRef, type RefObject } from 'react'
 import type { PointLight } from 'three'
 import { ClaqueteModelo, type PecasClaquete } from './ClaqueteModelo'
 import { DURACAO_ABERTURA, INSTANTE_BATIDA, poseDaClaquete } from './linhaDoTempo'
 
 const INICIO_REPETICAO = 0.9 // clicar na claquete repete o roteiro a partir da abertura do bastão
 
-function Cena({ aoTerminar }: { aoTerminar: () => void }) {
+type Props = { aoTerminar: () => void; gatilho: RefObject<(() => void) | null> }
+
+function Cena({ aoTerminar, gatilho }: Props) {
   const pecas = useRef<PecasClaquete>({ corpo: null, bastao: null, giz: null })
   const clarao = useRef<PointLight>(null)
   const terminou = useRef(false)
@@ -17,6 +19,10 @@ function Cena({ aoTerminar }: { aoTerminar: () => void }) {
   const largura = useThree((s) => s.size.width)
   const altura = useThree((s) => s.size.height)
   const relogio = useThree((s) => s.clock)
+  // o botão da IntroScreen (mouse, toque ou teclado) repete a batida por aqui
+  gatilho.current = () => {
+    repetirDesde.current = relogio.elapsedTime
+  }
 
   useFrame(({ clock, camera, gl }) => {
     const agora = clock.elapsedTime
@@ -59,9 +65,7 @@ function Cena({ aoTerminar }: { aoTerminar: () => void }) {
         <Lightformer form="rect" intensity={1.5} position={[0, 5, 2]} scale={[8, 2, 1]} />
       </Environment>
 
-      <group onPointerDown={() => { repetirDesde.current = relogio.elapsedTime }}>
-        <ClaqueteModelo pecas={pecas} />
-      </group>
+      <ClaqueteModelo pecas={pecas} />
 
       {largura >= 768 && (
         <EffectComposer>
@@ -73,10 +77,10 @@ function Cena({ aoTerminar }: { aoTerminar: () => void }) {
   )
 }
 
-export default function ClaqueteCena({ aoTerminar }: { aoTerminar: () => void }) {
+export default function ClaqueteCena(props: Props) {
   return (
     <Canvas dpr={[1, 1.5]} camera={{ fov: 35, position: [0, 0.35, 9] }} className="!absolute inset-0" aria-hidden="true">
-      <Cena aoTerminar={aoTerminar} />
+      <Cena {...props} />
     </Canvas>
   )
 }

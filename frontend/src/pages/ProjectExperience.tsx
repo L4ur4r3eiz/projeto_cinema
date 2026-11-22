@@ -234,7 +234,7 @@ export function ProjectExperience({
             className="relative z-10 flex min-h-screen flex-col items-center justify-center px-5 pt-16 text-center"
           >
             <m.p
-              initial={{ opacity: 0, letterSpacing: '0.9em' }}
+              initial={reduzirMovimento ? false : { opacity: 0, letterSpacing: '0.9em' }}
               animate={{ opacity: 1, letterSpacing: '0.42em' }}
               transition={{ duration: 1.1, ease: CURVA.cinema }}
               className="mb-7 text-[10px] font-semibold uppercase tracking-[0.42em] text-[#FFC700]"
