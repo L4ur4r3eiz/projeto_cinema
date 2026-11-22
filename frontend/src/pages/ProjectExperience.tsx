@@ -1,5 +1,8 @@
-import { useEffect, useState, useTransition, type FormEvent } from 'react'
+import { m, useScroll, useTransform } from 'motion/react'
+import { useEffect, useRef, useState, useTransition, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
+import { BarraRolagem, CartaoInclinavel } from '../components/animados'
+import { CURVA, escalonar } from '../motion/tokens'
 import {
   logoutAction,
   saveOnboardingAction,
@@ -67,6 +70,12 @@ export function ProjectExperience({
   const [applicationMessage, setApplicationMessage] = useState('')
   const [pending, startTransition] = useTransition()
   const [menuOpen, setMenuOpen] = useState(false)
+  // parallax do topo: o título desce e some enquanto a página sobe
+  const heroRef = useRef<HTMLElement>(null)
+  const { scrollYProgress: progressoHero } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
+  const yTitulo = useTransform(progressoHero, [0, 1], [0, 220])
+  const escalaTitulo = useTransform(progressoHero, [0, 1], [1, 0.88])
+  const opacidadeHero = useTransform(progressoHero, [0, 0.75], [1, 0])
 
   useEffect(() => {
     const shouldOpen = window.localStorage.getItem('etec:onboarding') === 'pending'
@@ -188,9 +197,10 @@ export function ProjectExperience({
           </nav>
         )}
       </header>
+      <BarraRolagem />
 
       <div>
-        <section id="inicio" className="poster-hero relative min-h-screen overflow-hidden">
+        <section ref={heroRef} id="inicio" className="poster-hero relative min-h-screen overflow-hidden">
           <div className="absolute inset-x-6 top-24 flex items-center gap-4 sm:inset-x-10 lg:inset-x-14">
             <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4 fill-[#FFC700]">
               <path d="M12 1.5c.5 6.7 3.8 10 10.5 10.5-6.7.5-10 3.8-10.5 10.5C11.5 15.8 8.2 12.5 1.5 12 8.2 11.5 11.5 8.2 12 1.5Z" />
@@ -201,26 +211,52 @@ export function ProjectExperience({
             </span>
           </div>
 
-          <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-5 pt-16 text-center">
-            <p className="mb-7 text-[10px] font-semibold uppercase tracking-[0.42em] text-[#FFC700]">
-              Projeto estudantil de audiovisual
-            </p>
-            <h1 className="text-[18vw] font-semibold leading-[.72] tracking-[-0.095em] text-white sm:text-[14vw] lg:text-[12.5vw]">
-              ETEC
-              <br />
-              <span className="text-[#FFC700]">EM CENA</span>
-            </h1>
-            <p className="mt-10 text-sm tracking-[0.16em] text-[#A1A1A1] sm:text-base">
-              Onde histórias ganham vida
-            </p>
-            <a
-              href="#curtas"
-              className="mt-8 inline-flex items-center gap-3 rounded-full bg-white px-6 py-3 text-xs font-bold text-black transition hover:bg-[#FFC700]"
+          <m.div
+            style={{ opacity: opacidadeHero }}
+            className="relative z-10 flex min-h-screen flex-col items-center justify-center px-5 pt-16 text-center"
+          >
+            <m.p
+              initial={{ opacity: 0, letterSpacing: '0.9em' }}
+              animate={{ opacity: 1, letterSpacing: '0.42em' }}
+              transition={{ duration: 1.1, ease: CURVA.cinema }}
+              className="mb-7 text-[10px] font-semibold uppercase tracking-[0.42em] text-[#FFC700]"
             >
-              <PlayIcon className="size-3.5" />
-              Assistir Curtas
-            </a>
-          </div>
+              Projeto estudantil de audiovisual
+            </m.p>
+            <m.h1
+              style={{ y: yTitulo, scale: escalaTitulo }}
+              className="text-[18vw] font-semibold leading-[.72] tracking-[-0.095em] text-white sm:text-[14vw] lg:text-[12.5vw]"
+            >
+              {/* cada linha sobe por trás de uma máscara, como letreiro de abertura */}
+              {['ETEC', 'EM CENA'].map((linha, i) => (
+                <span key={linha} className="block overflow-hidden pb-[0.06em]">
+                  <m.span
+                    initial={{ y: '105%' }}
+                    animate={{ y: '0%' }}
+                    transition={{ duration: 1, delay: 0.15 + i * 0.14, ease: CURVA.cinema }}
+                    className={`block ${i === 1 ? 'text-[#FFC700]' : ''}`}
+                  >
+                    {linha}
+                  </m.span>
+                </span>
+              ))}
+            </m.h1>
+            <m.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6, ease: CURVA.cinema }}
+              className="flex flex-col items-center"
+            >
+              <p className="mt-10 text-sm tracking-[0.16em] text-[#A1A1A1] sm:text-base">Onde histórias ganham vida</p>
+              <a
+                href="#curtas"
+                className="mt-8 inline-flex items-center gap-3 rounded-full bg-white px-6 py-3 text-xs font-bold text-black transition hover:scale-105 hover:bg-[#FFC700] hover:shadow-[0_0_40px_rgba(255,199,0,0.45)]"
+              >
+                <PlayIcon className="size-3.5" />
+                Assistir Curtas
+              </a>
+            </m.div>
+          </m.div>
 
           <div className="absolute bottom-7 left-6 text-[9px] uppercase tracking-[0.24em] text-[#707070] sm:left-10 lg:left-14">
             24 FPS <span className="mx-2 text-[#FFC700]">/</span> 4K
@@ -285,40 +321,43 @@ export function ProjectExperience({
             </div>
 
             {team.length > 0 ? (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              <m.div
+                variants={escalonar(0.09)}
+                initial="oculto"
+                whileInView="visivel"
+                viewport={{ once: true, amount: 0.2 }}
+                className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5"
+              >
                 {team.map((member, index) => {
                   const photo = mediaValue(member.photo)
                   return (
-                    <article
-                      key={member.id}
-                      data-reveal
-                      className="reveal-block group relative aspect-[4/5] overflow-hidden rounded-[24px] border border-[#222] bg-[#0D0D0D]"
-                      style={{ transitionDelay: `${index * 70}ms` }}
-                    >
+                    <CartaoInclinavel key={member.id} className="aspect-[4/5]">
+                    <article className="relative size-full overflow-hidden rounded-[24px] border border-[#222] bg-[#0D0D0D] transition-colors duration-500 group-hover:border-[#FFC700]/40">
                       {photo?.url ? (
                         <img
                           src={photo.url}
                           alt={photo.alt || `Retrato de ${member.name}`}
-                          className="absolute inset-0 size-full object-cover grayscale contrast-125 transition duration-700 group-hover:scale-[1.04]"
+                          className="absolute inset-0 size-full object-cover grayscale contrast-125 transition duration-700 group-hover:scale-[1.06] group-hover:grayscale-0 group-hover:contrast-100"
                         />
                       ) : (
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_40%_30%,#3a2c08,transparent_55%)]" />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
-                      <div className="absolute inset-x-0 bottom-0 p-5">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 via-35% to-transparent" />
+                      <div className="absolute inset-x-0 bottom-0 p-5" style={{ transform: 'translateZ(40px)' }}>
                         <span className="mb-3 block text-[9px] uppercase tracking-[0.24em] text-[#FFC700]">
                           0{index + 1}
                         </span>
-                        <h3 className="text-lg font-medium tracking-[-0.03em]">{member.name}</h3>
+                        <h3 className="text-base font-medium leading-tight tracking-[-0.03em] text-balance">{member.name}</h3>
                         <p className="mt-1 text-xs text-[#A1A1A1]">{member.role}</p>
                         <p className="mt-4 max-h-0 overflow-hidden text-xs leading-5 text-[#B0B0B0] opacity-0 transition-all duration-500 group-hover:max-h-24 group-hover:opacity-100">
                           {member.bio}
                         </p>
                       </div>
                     </article>
+                    </CartaoInclinavel>
                   )
                 })}
-              </div>
+              </m.div>
             ) : (
               <div className="rounded-[24px] border border-dashed border-white/15 p-12 text-center text-sm text-[#777]">
                 A equipe está preparando os perfis dos integrantes.
@@ -344,21 +383,25 @@ export function ProjectExperience({
             </div>
 
             {films.length > 0 ? (
-              <div className="grid gap-4 md:grid-cols-3">
+              <m.div
+                variants={escalonar(0.12)}
+                initial="oculto"
+                whileInView="visivel"
+                viewport={{ once: true, amount: 0.15 }}
+                className="grid gap-4 md:grid-cols-3"
+              >
                 {films.map((film, index) => {
                   const thumbnail = mediaValue(film.thumbnail)
                   return (
-                    <a
+                    <CartaoInclinavel
                       key={film.id}
-                      data-reveal
+                      className={index === 0 ? 'aspect-[16/9] md:col-span-3 md:aspect-[16/7]' : 'aspect-[4/3]'}
+                    >
+                    <a
                       href={film.youtubeURL || '#'}
                       target={film.youtubeURL ? '_blank' : undefined}
                       rel={film.youtubeURL ? 'noreferrer' : undefined}
-                      className={`reveal-block group relative overflow-hidden rounded-[26px] border border-[#222] bg-[#0D0D0D] ${
-                        index === 0
-                          ? 'aspect-[16/9] md:col-span-3 md:aspect-[16/7]'
-                          : 'aspect-[4/3]'
-                      }`}
+                      className="relative block size-full overflow-hidden rounded-[26px] border border-[#222] bg-[#0D0D0D] transition-colors duration-500 group-hover:border-[#FFC700]/40"
                     >
                       {thumbnail?.url ? (
                         <img
@@ -367,7 +410,14 @@ export function ProjectExperience({
                           className="absolute inset-0 size-full object-cover opacity-70 transition duration-700 group-hover:scale-[1.035] group-hover:opacity-90"
                         />
                       ) : (
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_40%,#553a00,transparent_48%)]" />
+                        // sem capa: fotogramas de película e o título gigante vazado
+                        <div aria-hidden="true" className="absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_60%_40%,#553a00,transparent_55%)]">
+                          <div className="film-perfuracao absolute inset-x-0 top-3 h-3" />
+                          <div className="film-perfuracao absolute inset-x-0 bottom-3 h-3" />
+                          <span className="absolute -right-4 top-1/2 -translate-y-1/2 whitespace-nowrap text-[9rem] font-bold leading-none tracking-[-0.06em] text-transparent [-webkit-text-stroke:1px_rgba(255,199,0,0.22)] transition duration-700 group-hover:translate-x-[-2rem]">
+                            {film.title}
+                          </span>
+                        </div>
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/15 to-black/10" />
                       <div className="absolute left-5 top-5 flex gap-2">
@@ -401,9 +451,10 @@ export function ProjectExperience({
                         </p>
                       </div>
                     </a>
+                    </CartaoInclinavel>
                   )
                 })}
-              </div>
+              </m.div>
             ) : (
               <div className="rounded-[24px] border border-dashed border-white/15 p-12 text-center text-sm text-[#777]">
                 Novas produções serão adicionadas em breve.

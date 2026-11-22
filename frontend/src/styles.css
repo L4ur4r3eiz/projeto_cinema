@@ -513,3 +513,9 @@ textarea.form-input {
     transform: none;
   }
 }
+
+/* furos de película (capa de curta sem imagem) */
+.film-perfuracao {
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.09) 0 14px, transparent 14px 30px);
+  mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
