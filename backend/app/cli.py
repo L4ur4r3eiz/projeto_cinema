@@ -14,8 +14,9 @@ def criar_admin(email: str) -> None:
     email = limpar_email(email)
     if not EMAIL_RE.match(email):
         sys.exit("E-mail inválido.")
-    senha = getpass("Senha (mínimo 8 caracteres): ")
-    if len(senha) < 8 or senha != getpass("Repita a senha: "):
+    # echo_char (Python 3.14) mostra um * por tecla: sem isso parece que o teclado não funciona
+    senha = getpass("Senha (mínimo 8 caracteres): ", echo_char="*")
+    if len(senha) < 8 or senha != getpass("Repita a senha: ", echo_char="*"):
         sys.exit("A senha é curta demais ou as duas não conferem.")
     with _sessionmaker()() as db:
         if db.scalar(select(Admin).where(Admin.email == email)):
