@@ -48,3 +48,15 @@ Quem pode entrar no painel: contas com papel **Equipe** e administradores. Só a
 cd backend && uv run pytest      # API (usa SQLite em memória, não precisa do Docker)
 cd frontend && npm run build     # confere os tipos e gera a versão final
 ```
+
+## Publicar (VPS provisória)
+
+Site em `https://etec-em-cena.taberna3d.com.br`, na pasta `/opt/etec-em-cena` da VPS. Banco e API rodam em containers (`docker-compose.prod.yml`, API só em `127.0.0.1:8400`); o nginx serve `frontend/dist` e repassa `/api` e `/uploads` (`deploy/nginx.conf`).
+
+```bash
+cd frontend && npm run build                                 # na sua máquina
+# copie o projeto e o frontend/dist para /opt/etec-em-cena, depois, na VPS:
+cd /opt/etec-em-cena
+docker compose -f docker-compose.prod.yml up -d --build     # .env com POSTGRES_* ao lado (fica só na VPS)
+docker compose -f docker-compose.prod.yml exec api python -m app.cli criar-admin voce@exemplo.com
+```
