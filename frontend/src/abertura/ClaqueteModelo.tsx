@@ -19,14 +19,13 @@ export function ClaqueteModelo({ pecas }: { pecas: RefObject<PecasClaquete> }) {
     const giz = criarTexturaGiz()
     return {
       listras: new MeshStandardMaterial({ map: criarTexturaListras(), roughness: 0.55, metalness: 0.05 }),
-      // emissivo acima de 1 e sem tone mapping: o giz "acende" e o Bloom pega só ele
+      // emissivo fraco: o giz fica legível na penumbra sem brilhar
       giz: new MeshStandardMaterial({
         map: giz,
         emissiveMap: giz,
         emissive: '#ffffff',
-        emissiveIntensity: 0.25,
+        emissiveIntensity: 0.08,
         roughness: 0.95,
-        toneMapped: false,
       }),
       preto: new MeshStandardMaterial({ color: '#0a0a0a', roughness: 0.4, metalness: 0.15 }),
       metal: new MeshStandardMaterial({ color: '#b9b9b9', roughness: 0.25, metalness: 1 }),

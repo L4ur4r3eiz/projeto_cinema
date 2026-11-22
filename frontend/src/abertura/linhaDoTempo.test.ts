@@ -3,7 +3,7 @@ import { DURACAO_ABERTURA, poseDaClaquete } from './linhaDoTempo'
 
 describe('poseDaClaquete', () => {
   it('começa no alto e assenta na queda', () => {
-    expect(poseDaClaquete(0).alturaQueda).toBeCloseTo(6)
+    expect(poseDaClaquete(0).alturaQueda).toBeCloseTo(2.5)
     expect(poseDaClaquete(1.0).alturaQueda).toBeCloseTo(0, 1)
   })
   it('abre o bastão e bate em 150 ms', () => {

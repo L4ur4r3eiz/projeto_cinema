@@ -23,26 +23,26 @@ export function poseDaClaquete(tempo: number): PoseClaquete {
   const t = limitar(tempo, 0, DURACAO_ABERTURA)
 
   const queda = trecho(t, 0, 0.9)
-  // cai rápido e afunda um pouco antes de assentar (sen(π·p) zera nas pontas)
-  const alturaQueda = 6 * (1 - queda) ** 3 - 0.3 * Math.sin(Math.PI * queda) * queda
+  // desce pouco e assenta sem quique: entrada discreta
+  const alturaQueda = 2.5 * (1 - sai(queda))
 
   const abrir = meio(trecho(t, 0.9, 1.6))
   const fechar = entra(trecho(t, 1.6, INSTANTE_BATIDA))
   const anguloBastao = t < 1.6 ? 0.55 * abrir : 0.55 * (1 - fechar)
 
   const depois = t - INSTANTE_BATIDA
-  const flash = depois < 0 ? 0 : Math.exp(-depois / 0.25)
-  const tremor = depois < 0 ? 0 : (1 - trecho(t, INSTANTE_BATIDA, INSTANTE_BATIDA + 0.4)) ** 2
+  const flash = depois < 0 ? 0 : Math.exp(-depois / 0.12)
+  const tremor = depois < 0 ? 0 : (1 - trecho(t, INSTANTE_BATIDA, INSTANTE_BATIDA + 0.25)) ** 2
 
-  const saida = entra(trecho(t, 3.4, DURACAO_ABERTURA))
-  const orbita = 0.08 * Math.sin(Math.PI * trecho(t, INSTANTE_BATIDA, 3.4))
+  // a saída escurece a cena (a cena usa saida para baixar a exposição) com um recuo curto da câmera
+  const saida = meio(trecho(t, 3.4, DURACAO_ABERTURA))
 
   return {
     alturaQueda,
-    rotacaoY: -0.6 * (1 - sai(queda)) + orbita,
+    rotacaoY: -0.12 * (1 - sai(queda)),
     anguloBastao,
-    // 9,5 → 7,4 (enquadra lousa + bastão aberto) → 0,6 (atravessa a lousa na saída)
-    cameraZ: 9.5 - 2.1 * meio(trecho(t, 0.9, 1.6)) - 6.8 * saida,
+    // 9 → 7,6 (enquadra lousa + bastão aberto) → 8,2 (recuo leve na saída)
+    cameraZ: 9 - 1.4 * meio(trecho(t, 0.9, 1.6)) + 0.6 * saida,
     tremor,
     flash,
     giz: sai(trecho(t, INSTANTE_BATIDA, 2.6)),

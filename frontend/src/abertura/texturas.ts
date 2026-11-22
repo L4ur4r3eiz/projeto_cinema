@@ -75,7 +75,6 @@ export function criarTexturaGiz(): CanvasTexture {
   desgastar(ctx, L, A, 9000)
 
   const branco = '#f4f1e6'
-  const amarelo = '#ffd23f'
   const familia = "'Manrope', system-ui, sans-serif"
   ctx.strokeStyle = branco
   ctx.lineWidth = 4
@@ -90,7 +89,7 @@ export function criarTexturaGiz(): CanvasTexture {
   linhaGiz(ctx, L / 2, 520, L / 2, 720)
 
   textoGiz(ctx, 'PRODUÇÃO', 60, 70, `700 34px ${familia}`, branco)
-  textoGiz(ctx, 'ETEC EM CENA', 60, 190, `800 150px ${familia}`, amarelo)
+  textoGiz(ctx, 'ETEC EM CENA', 60, 190, `800 150px ${familia}`, branco)
 
   const rotulo = `700 30px ${familia}`
   const valor = `800 120px ${familia}`
