@@ -21,3 +21,18 @@ export function temWebGL(): boolean {
     return false
   }
 }
+
+// Pular, fim do 3D e timer de segurança chamam a mesma saída: só a primeira chamada navega.
+export function criarSaidaUnica(navegar: () => void): () => void {
+  let saiu = false
+  return () => {
+    if (saiu) return
+    saiu = true
+    navegar()
+  }
+}
+
+// Com "reduzir movimento", o topo não se desloca nem encolhe ao rolar (só o fade fica).
+export function estiloParallax<T extends object>(reduzir: boolean | null, movimento: T): T | Record<string, never> {
+  return reduzir ? {} : movimento
+}

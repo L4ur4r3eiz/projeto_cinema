@@ -18,6 +18,15 @@ export const revelar: Variants = {
   visivel: { opacity: 1, y: 0, transition: entrada },
 }
 
+// Troca de página: só opacidade. Nada de filter/transform aqui: qualquer um deles no wrapper
+// vira referência para os filhos position: fixed (cabeçalho, modais) e quebra o layout.
+export const TRANSICAO_ROTA = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+  transition: { duration: DURACAO.rapida, ease: CURVA.cinema },
+}
+
 export function escalonar(passo = 0.08): Variants {
   return { oculto: {}, visivel: { transition: { staggerChildren: passo } } }
 }

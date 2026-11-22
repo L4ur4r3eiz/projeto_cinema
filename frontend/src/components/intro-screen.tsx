@@ -1,8 +1,8 @@
 import { useReducedMotion } from 'motion/react'
-import { useCallback, useEffect, useRef, useState, type ComponentType } from 'react'
+import { useEffect, useMemo, useState, type ComponentType } from 'react'
 import { useNavigate } from 'react-router'
 import { DURACAO_ABERTURA } from '../abertura/linhaDoTempo'
-import { escolherModoAbertura, temWebGL, type ModoAbertura } from '../abertura/modo'
+import { criarSaidaUnica, escolherModoAbertura, temWebGL, type ModoAbertura } from '../abertura/modo'
 import { Brand } from './brand'
 
 type Cena = ComponentType<{ aoTerminar: () => void }>
@@ -17,14 +17,8 @@ export function IntroScreen({ destination = '/projeto' }: { destination?: string
   const [modo, setModo] = useState<ModoAbertura>(reduzirMovimento ? 'estatico' : 'css')
   const [Cena3D, setCena3D] = useState<Cena | null>(null)
   const [clapping, setClapping] = useState(false)
-  const saiu = useRef(false)
-
   // Pular, fim do 3D e fim do tempo passam todos por aqui: navega uma vez só.
-  const sair = useCallback(() => {
-    if (saiu.current) return
-    saiu.current = true
-    navigate(destination, { replace: true })
-  }, [destination, navigate])
+  const sair = useMemo(() => criarSaidaUnica(() => navigate(destination, { replace: true })), [destination, navigate])
 
   useEffect(() => {
     if (reduzirMovimento || !temWebGL()) return

@@ -1,7 +1,8 @@
 import { AnimatePresence, LazyMotion, MotionConfig, domAnimation, m } from 'motion/react'
 import { lazy, Suspense, useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router'
-import { CURVA, DURACAO } from './motion/tokens'
+import { FalhaAoCarregar, LimiteErro } from './components/LimiteErro'
+import { TRANSICAO_ROTA } from './motion/tokens'
 import { IntroScreen } from './components/intro-screen'
 import { AuthScreen } from './pages/Acesso'
 import { NaoEncontrada } from './pages/NaoEncontrada'
@@ -32,13 +33,8 @@ export default function App() {
     <LazyMotion features={domAnimation} strict>
     <MotionConfig reducedMotion="user">
       <AnimatePresence mode="wait">
-        <m.div
-          key={pathname}
-          initial={{ opacity: 0, filter: 'blur(6px)' }}
-          animate={{ opacity: 1, filter: 'blur(0px)' }}
-          exit={{ opacity: 0, filter: 'blur(6px)' }}
-          transition={{ duration: DURACAO.media, ease: CURVA.cinema }}
-        >
+        <m.div key={pathname} {...TRANSICAO_ROTA}>
+          <LimiteErro key={pathname} plano={<FalhaAoCarregar />}>
           <Suspense fallback={<div className="min-h-screen bg-[#030303]" />}>
           <Routes location={location}>
             <Route index element={<Navigate to="/acesso" replace />} />
@@ -50,6 +46,7 @@ export default function App() {
             <Route path="*" element={<NaoEncontrada />} />
           </Routes>
           </Suspense>
+          </LimiteErro>
         </m.div>
       </AnimatePresence>
     </MotionConfig>

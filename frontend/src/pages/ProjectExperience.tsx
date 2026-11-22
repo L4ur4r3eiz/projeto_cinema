@@ -1,6 +1,7 @@
 import { m, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { lazy, Suspense, useEffect, useRef, useState, useTransition, type FormEvent } from 'react'
-import { temWebGL } from '../abertura/modo'
+import { estiloParallax, temWebGL } from '../abertura/modo'
+import { LimiteErro } from '../components/LimiteErro'
 import { useCenaVisivel } from '../three/useCenaVisivel'
 import { useNavigate } from 'react-router'
 import { BarraRolagem, CartaoInclinavel } from '../components/animados'
@@ -211,9 +212,11 @@ export function ProjectExperience({
         <section ref={heroRef} id="inicio" className="poster-hero relative min-h-screen overflow-hidden">
           {mostrar3D && !reduzirMovimento && (
             <m.div style={{ opacity: opacidadeHero }} className="pointer-events-none absolute inset-0 opacity-90">
-              <Suspense fallback={null}>
-                <RoloDeFilme progresso={progressoHero} ativo={heroVisivel} />
-              </Suspense>
+              <LimiteErro plano={null}>
+                <Suspense fallback={null}>
+                  <RoloDeFilme progresso={progressoHero} ativo={heroVisivel} />
+                </Suspense>
+              </LimiteErro>
             </m.div>
           )}
           <div className="absolute inset-x-6 top-24 flex items-center gap-4 sm:inset-x-10 lg:inset-x-14">
@@ -227,7 +230,7 @@ export function ProjectExperience({
           </div>
 
           <m.div
-            style={{ opacity: opacidadeHero, y: yTitulo, scale: escalaTitulo }}
+            style={{ opacity: opacidadeHero, ...estiloParallax(reduzirMovimento, { y: yTitulo, scale: escalaTitulo }) }}
             className="relative z-10 flex min-h-screen flex-col items-center justify-center px-5 pt-16 text-center"
           >
             <m.p
