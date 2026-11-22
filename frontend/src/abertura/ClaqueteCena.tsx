@@ -17,6 +17,7 @@ function Cena({ aoTerminar }: { aoTerminar: () => void }) {
   const terminou = useRef(false)
   const repetirDesde = useRef<number | null>(null)
   const largura = useThree((s) => s.size.width)
+  const altura = useThree((s) => s.size.height)
   const relogio = useThree((s) => s.clock)
 
   useFrame(({ clock, camera }) => {
@@ -39,7 +40,9 @@ function Cena({ aoTerminar }: { aoTerminar: () => void }) {
     if (poeira.current) poeira.current.visible = agora >= INSTANTE_BATIDA
     aberracao.current?.offset.set(0.004 * batida.flash, 0.002 * batida.flash)
 
-    camera.position.set(chacoalho * 0.08, 0.35 + chacoalho * 0.05, pose.cameraZ)
+    // tela estreita (celular em pé): recua a câmera para a lousa caber na largura
+    const recuo = Math.max(1, 0.8 / (largura / altura))
+    camera.position.set(chacoalho * 0.08, 0.35 + chacoalho * 0.05, pose.cameraZ * recuo)
     // a câmera acompanha a queda pela metade: a claquete entra em quadro desde o primeiro instante
     camera.lookAt(0, 0.45 + pose.alturaQueda * 0.5, 0)
 
