@@ -3,7 +3,7 @@ export const DURACAO_ABERTURA = 4.2
 export const INSTANTE_BATIDA = 1.75
 
 export type PoseClaquete = {
-  alturaQueda: number // y do corpo (6 = fora de quadro, 0 = assentada)
+  alturaQueda: number // y do corpo (6 = acima do quadro, 0 = assentada)
   rotacaoY: number // giro do corpo em rad
   anguloBastao: number // abertura do bastão em rad (0 = fechado)
   cameraZ: number // distância da câmera
@@ -41,7 +41,8 @@ export function poseDaClaquete(tempo: number): PoseClaquete {
     alturaQueda,
     rotacaoY: -0.6 * (1 - sai(queda)) + orbita,
     anguloBastao,
-    cameraZ: 9 - 3 * meio(trecho(t, 0.9, 1.6)) - 5.5 * saida,
+    // 9,5 → 7,4 (enquadra lousa + bastão aberto) → 0,6 (atravessa a lousa na saída)
+    cameraZ: 9.5 - 2.1 * meio(trecho(t, 0.9, 1.6)) - 6.8 * saida,
     tremor,
     flash,
     giz: sai(trecho(t, INSTANTE_BATIDA, 2.6)),
