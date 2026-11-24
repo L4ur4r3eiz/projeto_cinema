@@ -24,6 +24,24 @@ def test_quem_erra_a_senha_de_outra_pessoa_nao_trava_a_conta_dela(cliente, novo_
     assert r.status_code == 200
 
 
+def test_conta_tem_teto_somando_todos_os_ips(cliente, novo_cliente):
+    cadastrar(cliente)
+    for i in range(40):
+        novo_cliente().post("/api/auth/login", json={"email": "ana@etec.com", "password": "errada123"},
+                            headers={"X-Real-IP": f"203.0.113.{i}"})
+    r = novo_cliente().post("/api/auth/login", json={"email": "ana@etec.com", "password": "errada123"},
+                            headers={"X-Real-IP": "198.51.100.200"})
+    assert r.status_code == 429
+
+
+def test_ipv6_conta_pelo_bloco_64():
+    from starlette.requests import Request
+    from app.limite import ip_de
+    pedido = lambda ip: Request({"type": "http", "headers": [(b"x-real-ip", ip.encode())], "client": None})
+    assert ip_de(pedido("2001:db8:1:2::a")) == ip_de(pedido("2001:db8:1:2:ffff::b"))
+    assert ip_de(pedido("203.0.113.5")) == "203.0.113.5"
+
+
 def test_ip_vem_do_nginx_e_nao_do_cabecalho_do_cloudflare(cliente):
     # CF-Connecting-IP pode ser inventado por quem acessa a VPS direto: não pode separar as contagens
     for i in range(10):
