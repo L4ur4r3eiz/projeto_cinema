@@ -34,6 +34,14 @@ def test_conta_tem_teto_somando_todos_os_ips(cliente, novo_cliente):
     assert r.status_code == 429
 
 
+def test_logins_certos_nao_contam_para_o_teto_da_conta(cliente, novo_cliente):
+    cadastrar(cliente)
+    for i in range(45):
+        r = novo_cliente().post("/api/auth/login", json={"email": "ana@etec.com", "password": "senha-segura"},
+                                headers={"X-Real-IP": f"203.0.113.{i}"})
+        assert r.status_code == 200
+
+
 def test_ipv6_conta_pelo_bloco_64():
     from starlette.requests import Request
     from app.limite import ip_de

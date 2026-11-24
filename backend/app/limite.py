@@ -25,10 +25,8 @@ def ip_de(request: Request) -> str:
     return str(ipaddress.ip_network(f"{ip}/64", strict=False)) if ip.version == 6 else str(ip)
 
 
-def contar(chave: str, maximo: int) -> None:
-    """Registra uma tentativa; recusa com 429 quando a chave já usou o máximo dentro da janela."""
+def _fila(chave: str, agora: float) -> deque[float]:
     global _chamadas
-    agora = time.monotonic()
     _chamadas += 1
     if _chamadas % VARRER_A_CADA == 0:
         for velha in [c for c, f in _tentativas.items() if not f or agora - f[-1] > JANELA_S]:
@@ -36,9 +34,28 @@ def contar(chave: str, maximo: int) -> None:
     fila = _tentativas[chave[:300]]
     while fila and agora - fila[0] > JANELA_S:
         fila.popleft()
-    if len(fila) >= maximo:
+    return fila
+
+
+def conferir(chave: str, maximo: int) -> None:
+    """Recusa com 429 se a chave já usou o máximo na janela, sem registrar nada."""
+    if len(_fila(chave, time.monotonic())) >= maximo:
         raise HTTPException(429, MENSAGEM)
-    fila.append(agora)
+
+
+def registrar(chave: str) -> None:
+    agora = time.monotonic()
+    _fila(chave, agora).append(agora)
+
+
+def contar(chave: str, maximo: int) -> None:
+    """Confere e registra uma tentativa."""
+    conferir(chave, maximo)
+    registrar(chave)
+
+
+def esquecer(chave: str) -> None:
+    _tentativas.pop(chave[:300], None)
 
 
 def zerar() -> None:
