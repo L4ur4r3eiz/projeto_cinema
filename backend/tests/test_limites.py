@@ -12,6 +12,27 @@ def test_login_trava_depois_de_muitas_tentativas_no_mesmo_email(cliente):
     assert r.json()["message"] == "Muitas tentativas. Aguarde alguns minutos e tente de novo."
 
 
+def test_quem_erra_a_senha_de_outra_pessoa_nao_trava_a_conta_dela(cliente, novo_cliente):
+    cadastrar(cliente)
+    atacante = novo_cliente()
+    for _ in range(9):
+        atacante.post("/api/auth/login", json={"email": "ana@etec.com", "password": "errada123"},
+                      headers={"X-Real-IP": "203.0.113.9"})
+    dona = novo_cliente()
+    r = dona.post("/api/auth/login", json={"email": "ana@etec.com", "password": "senha-segura"},
+                  headers={"X-Real-IP": "198.51.100.7"})
+    assert r.status_code == 200
+
+
+def test_ip_vem_do_nginx_e_nao_do_cabecalho_do_cloudflare(cliente):
+    # CF-Connecting-IP pode ser inventado por quem acessa a VPS direto: não pode separar as contagens
+    for i in range(10):
+        assert cadastrar(cliente, f"x{i}@etec.com").status_code == 200
+    r = cliente.post("/api/auth/signup", json={"email": "x10@etec.com", "password": "senha-segura"},
+                     headers={"CF-Connecting-IP": "192.0.2.55"})
+    assert r.status_code == 429
+
+
 def test_cadastro_trava_depois_de_muitas_contas_do_mesmo_ip(cliente):
     for i in range(10):
         assert cadastrar(cliente, f"aluno{i}@etec.com").status_code == 200

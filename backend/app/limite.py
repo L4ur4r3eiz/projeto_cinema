@@ -11,8 +11,9 @@ _tentativas: dict[str, deque[float]] = defaultdict(deque)
 
 
 def ip_de(request: Request) -> str:
-    # atrás do Cloudflare o IP real vem neste cabeçalho; sem ele, o do nginx/uvicorn
-    return request.headers.get("cf-connecting-ip") or (request.client.host if request.client else "?")
+    # X-Real-IP é escrito pelo nginx (sobrescreve o que o cliente mandar) e já vem resolvido do Cloudflare
+    # pelo real_ip do vhost; a API só escuta em 127.0.0.1, então ninguém fala com ela sem passar pelo nginx
+    return request.headers.get("x-real-ip") or (request.client.host if request.client else "?")
 
 
 def contar(chave: str, maximo: int) -> None:
@@ -21,6 +22,8 @@ def contar(chave: str, maximo: int) -> None:
     fila = _tentativas[chave]
     while fila and agora - fila[0] > JANELA_S:
         fila.popleft()
+    for velha in [c for c, f in _tentativas.items() if not f and c != chave]:
+        del _tentativas[velha]  # filas vazias não ficam na memória
     if len(fila) >= maximo:
         raise HTTPException(429, MENSAGEM)
     fila.append(agora)

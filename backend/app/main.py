@@ -129,9 +129,11 @@ def entrar(dados: Credenciais, request: Request, resposta: Response, db: Db = De
     email = limpar_email(dados.email)
     if not EMAIL_RE.match(email) or not dados.password:
         raise HTTPException(400, "Preencha e-mail e senha para entrar.")
-    # por e-mail barra quem tenta adivinhar a senha de uma conta; por IP, quem varre várias contas
-    limite.contar(f"login:{email}", 8)
-    limite.contar(f"login-ip:{limite.ip_de(request)}", 30)
+    # e-mail+IP barra quem tenta adivinhar uma senha sem deixar um estranho travar a conta dos outros;
+    # só por IP, barra quem varre várias contas
+    ip = limite.ip_de(request)
+    limite.contar(f"login:{email}:{ip}", 8)
+    limite.contar(f"login-ip:{ip}", 30)
     usuario = db.scalar(select(User).where(User.email == email))
     if not senha_confere(usuario.password_hash if usuario else None, dados.password):
         raise HTTPException(401, "E-mail ou senha incorretos.")
@@ -323,8 +325,9 @@ async def enviar_imagem(arquivo: UploadFile, _=Depends(exigir_operador)):
 # ---------- administradores (substituem o /admin do Payload) ----------
 @app.post("/api/admin/login")
 def admin_entrar(dados: Credenciais, request: Request, resposta: Response, db: Db = Depends(get_db)):
-    limite.contar(f"admin:{limpar_email(dados.email)}", 8)
-    limite.contar(f"admin-ip:{limite.ip_de(request)}", 30)
+    ip = limite.ip_de(request)
+    limite.contar(f"admin:{limpar_email(dados.email)}:{ip}", 8)
+    limite.contar(f"admin-ip:{ip}", 30)
     admin = db.scalar(select(Admin).where(Admin.email == limpar_email(dados.email)))
     if not senha_confere(admin.password_hash if admin else None, dados.password):
         raise HTTPException(401, "E-mail ou senha incorretos.")
