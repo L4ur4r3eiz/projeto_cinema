@@ -54,9 +54,13 @@ cd frontend && npm run build     # confere os tipos e gera a versão final
 Site em `https://etec-em-cena.taberna3d.com.br`, na pasta `/opt/etec-em-cena` da VPS. Banco e API rodam em containers (`docker-compose.prod.yml`, API só em `127.0.0.1:8400`); o nginx serve `frontend/dist` e repassa `/api` e `/uploads` (`deploy/nginx.conf`).
 
 ```bash
-cd frontend && npm run build                                 # na sua máquina
-# copie o projeto e o frontend/dist para /opt/etec-em-cena, depois, na VPS:
-cd /opt/etec-em-cena
-docker compose -f docker-compose.prod.yml up -d --build     # .env com POSTGRES_* ao lado (fica só na VPS)
-docker compose -f docker-compose.prod.yml exec api python -m app.cli criar-admin voce@exemplo.com
+bash deploy/publicar.sh    # testes, build, envio do código, API refeita e site trocado (o anterior fica em frontend/dist.anterior)
 ```
+
+Primeiro administrador (a senha é pedida na hora e aparece como `*`):
+
+```bash
+ssh -t root@195.35.42.118 "cd /opt/etec-em-cena && docker compose -p etec-em-cena -f docker-compose.prod.yml exec api python -m app.cli criar-admin voce@exemplo.com"
+```
+
+Backup: `deploy/backup.sh` roda todo dia às 3h30 (cron `/etc/cron.d/etec-em-cena-backup`) e guarda banco e imagens em `/opt/etec-em-cena/backups` por 14 dias. O comando para restaurar está no topo do script.

@@ -11,9 +11,16 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.db import Base, get_db
+from app.limite import zerar as zerar_limites
 from app.main import app
 from app.models import Admin
 from app.seguranca import hash_senha
+
+
+@pytest.fixture(autouse=True)
+def limites_zerados():
+    # o limitador guarda tentativas em memória: cada teste começa do zero
+    zerar_limites()
 
 
 @pytest.fixture

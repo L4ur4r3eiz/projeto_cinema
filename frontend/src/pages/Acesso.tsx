@@ -235,6 +235,13 @@ export function AuthScreen() {
                   <path d="M5 12h14M14 7l5 5-5 5" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               </button>
+              {mode === 'signup' && (
+                <p className="text-[11px] leading-5 text-[#6F6F6F]">
+                  Guardamos só seu e-mail e as respostas do questionário, para você acessar o site e para o
+                  projeto conhecer o público. Apenas a equipe e os administradores têm acesso, e nada é
+                  repassado a terceiros.
+                </p>
+              )}
             </form>
             <button
               type="button"

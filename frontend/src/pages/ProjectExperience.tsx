@@ -592,6 +592,11 @@ export function ProjectExperience({
                   <path d="M5 12h14M14 7l5 5-5 5" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               </button>
+              <p className="text-[11px] leading-5 text-[#6F6F6F]">
+                Seus dados servem só para a equipe do projeto entrar em contato sobre a inscrição. Apenas a
+                equipe e os administradores têm acesso, e nada é repassado a terceiros. Para corrigir ou
+                apagar seus dados, fale com a equipe pelo contato no rodapé.
+              </p>
             </form>
           </div>
         </section>

@@ -24,3 +24,6 @@ review-receipts/
 
 # área de trabalho dos planos (superpowers)
 .superpowers/
+
+# backups gerados na VPS
+backups/

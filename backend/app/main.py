@@ -14,7 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session as Db
 
-from . import config
+from . import config, limite
 from .db import get_db
 from .models import AREAS, STATUS, Admin, Application, Session, ShortFilm, TeamMember, User
 from .seguranca import (EMAIL_RE, apagar_cookie, em_utc, expira_em, gravar_cookie, hash_senha, hash_token,
@@ -106,7 +106,8 @@ class Credenciais(BaseModel):
 
 
 @app.post("/api/auth/signup")
-def cadastrar(dados: Credenciais, resposta: Response, db: Db = Depends(get_db)):
+def cadastrar(dados: Credenciais, request: Request, resposta: Response, db: Db = Depends(get_db)):
+    limite.contar(f"cadastro:{limite.ip_de(request)}", 10)
     email = limpar_email(dados.email)
     if not EMAIL_RE.match(email):
         raise HTTPException(400, "Informe um e-mail válido.")
@@ -124,10 +125,13 @@ def cadastrar(dados: Credenciais, resposta: Response, db: Db = Depends(get_db)):
 
 
 @app.post("/api/auth/login")
-def entrar(dados: Credenciais, resposta: Response, db: Db = Depends(get_db)):
+def entrar(dados: Credenciais, request: Request, resposta: Response, db: Db = Depends(get_db)):
     email = limpar_email(dados.email)
     if not EMAIL_RE.match(email) or not dados.password:
         raise HTTPException(400, "Preencha e-mail e senha para entrar.")
+    # por e-mail barra quem tenta adivinhar a senha de uma conta; por IP, quem varre várias contas
+    limite.contar(f"login:{email}", 8)
+    limite.contar(f"login-ip:{limite.ip_de(request)}", 30)
     usuario = db.scalar(select(User).where(User.email == email))
     if not senha_confere(usuario.password_hash if usuario else None, dados.password):
         raise HTTPException(401, "E-mail ou senha incorretos.")
@@ -208,6 +212,12 @@ def url_imagem(valor: str | None) -> str | None:
     return valor
 
 
+def apagar_upload(url: str | None) -> None:
+    # só apaga arquivos com nome gerado pelo /api/uploads (o regex impede sair da pasta)
+    if url and URL_UPLOAD.match(url):
+        (config.UPLOAD_DIR / url.rsplit("/", 1)[1]).unlink(missing_ok=True)
+
+
 class Integrante(BaseModel):
     name: str
     role: str
@@ -226,9 +236,11 @@ def salvar_integrante(dados: Integrante, item_id: int | None = None, _=Depends(e
     if not membro:
         raise HTTPException(404, "Integrante não encontrado.")
     membro.name, membro.role, membro.bio = nome, funcao, limpar_texto(dados.bio, 500)
-    membro.photo_url = url_imagem(dados.photoUrl)
+    antiga, membro.photo_url = membro.photo_url, url_imagem(dados.photoUrl)
     db.add(membro)
     db.commit()
+    if antiga != membro.photo_url:
+        apagar_upload(antiga)
     return ok("Integrante atualizado." if item_id else "Integrante adicionado.")
 
 
@@ -252,21 +264,24 @@ def salvar_curta(dados: Curta, item_id: int | None = None, _=Depends(exigir_oper
         raise HTTPException(404, "Curta não encontrado.")
     curta.title, curta.duration, curta.genre = titulo, duracao, genero
     curta.synopsis, curta.youtube_url = limpar_texto(dados.synopsis, 500), limpar_texto(dados.youtubeURL, 500)
-    curta.thumbnail_url = url_imagem(dados.thumbnailUrl)
+    antiga, curta.thumbnail_url = curta.thumbnail_url, url_imagem(dados.thumbnailUrl)
     db.add(curta)
     db.commit()
+    if antiga != curta.thumbnail_url:
+        apagar_upload(antiga)
     return ok("Curta atualizado." if item_id else "Curta adicionado.")
 
 
 @app.delete("/api/{tipo}/{item_id}")
 def remover(tipo: Literal["team-members", "short-films"], item_id: int, _=Depends(exigir_operador),
             db: Db = Depends(get_db)):
-    # shortcut: a imagem do item continua na pasta de uploads; limpar quando houver muitos arquivos órfãos
     item = db.get(TeamMember if tipo == "team-members" else ShortFilm, item_id)
     if not item:
         raise HTTPException(404, "Item não encontrado.")
+    imagem = item.photo_url if isinstance(item, TeamMember) else item.thumbnail_url
     db.delete(item)
     db.commit()
+    apagar_upload(imagem)
     return ok("Item removido.")
 
 
@@ -307,7 +322,9 @@ async def enviar_imagem(arquivo: UploadFile, _=Depends(exigir_operador)):
 
 # ---------- administradores (substituem o /admin do Payload) ----------
 @app.post("/api/admin/login")
-def admin_entrar(dados: Credenciais, resposta: Response, db: Db = Depends(get_db)):
+def admin_entrar(dados: Credenciais, request: Request, resposta: Response, db: Db = Depends(get_db)):
+    limite.contar(f"admin:{limpar_email(dados.email)}", 8)
+    limite.contar(f"admin-ip:{limite.ip_de(request)}", 30)
     admin = db.scalar(select(Admin).where(Admin.email == limpar_email(dados.email)))
     if not senha_confere(admin.password_hash if admin else None, dados.password):
         raise HTTPException(401, "E-mail ou senha incorretos.")
