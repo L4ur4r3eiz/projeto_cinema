@@ -71,6 +71,15 @@ def test_login_de_admin_tambem_trava(cliente, admin):
     assert cliente.post("/api/admin/login", json={"email": admin[0], "password": admin[1]}).status_code == 429
 
 
+def test_curta_recusa_url_que_nao_seja_http(cliente, admin, novo_cliente):
+    adm = novo_cliente()
+    adm.post("/api/admin/login", json={"email": admin[0], "password": admin[1]})
+    base = {"title": "Sala 12", "duration": "11 min", "genre": "Terror"}
+    assert adm.post("/api/short-films", json={**base, "youtubeURL": "javascript:alert(1)"}).status_code == 400
+    assert adm.post("/api/short-films", json={**base, "youtubeURL": "https://youtu.be/abc"}).status_code == 200
+    assert adm.post("/api/short-films", json={**base, "youtubeURL": ""}).status_code == 200
+
+
 def test_imagem_antiga_sai_do_disco_ao_trocar_e_ao_excluir(cliente, admin, novo_cliente):
     adm = novo_cliente()
     adm.post("/api/admin/login", json={"email": admin[0], "password": admin[1]})

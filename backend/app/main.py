@@ -22,7 +22,9 @@ from .seguranca import (EMAIL_RE, apagar_cookie, em_utc, expira_em, gravar_cooki
 from .sessoes import (COOKIE_ADMIN, COOKIE_USUARIO, admin_atual, exigir_admin, exigir_operador, exigir_usuario,
                       usuario_atual)
 
-app = FastAPI(title="Etec em Cena")
+# /docs, /redoc e /openapi.json só com DEBUG=1 (desenvolvimento); em produção não expõem o esquema da API
+_docs = {} if config.DEBUG else {"docs_url": None, "redoc_url": None, "openapi_url": None}
+app = FastAPI(title="Etec em Cena", **_docs)
 config.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=config.UPLOAD_DIR), name="uploads")
 
@@ -250,6 +252,14 @@ def salvar_integrante(dados: Integrante, item_id: int | None = None, _=Depends(e
     return ok("Integrante atualizado." if item_id else "Integrante adicionado.")
 
 
+def url_video(valor: str) -> str:
+    # vazio é permitido; só http(s). Sem isso, um operador poderia salvar javascript:... (XSS no card do curta)
+    url = limpar_texto(valor, 500)
+    if url and not url.startswith(("http://", "https://")):
+        raise HTTPException(400, "O link do vídeo precisa começar com http:// ou https://.")
+    return url
+
+
 class Curta(BaseModel):
     title: str
     duration: str
@@ -269,7 +279,7 @@ def salvar_curta(dados: Curta, item_id: int | None = None, _=Depends(exigir_oper
     if not curta:
         raise HTTPException(404, "Curta não encontrado.")
     curta.title, curta.duration, curta.genre = titulo, duracao, genero
-    curta.synopsis, curta.youtube_url = limpar_texto(dados.synopsis, 500), limpar_texto(dados.youtubeURL, 500)
+    curta.synopsis, curta.youtube_url = limpar_texto(dados.synopsis, 500), url_video(dados.youtubeURL)
     antiga, curta.thumbnail_url = curta.thumbnail_url, url_imagem(dados.thumbnailUrl)
     db.add(curta)
     db.commit()
